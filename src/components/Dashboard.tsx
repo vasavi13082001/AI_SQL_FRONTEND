@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { TrendingUp, Users, FileText, Activity } from 'lucide-react'
+import MetadataExplorer from './MetadataExplorer'
 
 const Dashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
@@ -25,6 +26,8 @@ const Dashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back, Admin!</h1>
         <p className="text-gray-600 dark:text-gray-400">Here's what's happening in your dashboard today.</p>
       </div>
+
+      <MetadataExplorer />
 
       {/* Period Selector */}
       <div className="mb-8 flex gap-2">

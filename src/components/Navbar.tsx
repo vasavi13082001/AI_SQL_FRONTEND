@@ -1,5 +1,5 @@
 import React from 'react'
-import { Bell, Search, Moon, Sun, User } from 'lucide-react'
+import { Bell, Search, Moon, Sun, User, Menu } from 'lucide-react'
 import { useDarkMode } from '../context/DarkModeContext'
 
 interface NavbarProps {
@@ -14,6 +14,13 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
       <div className="h-full px-4 lg:px-6 flex items-center justify-between">
         {/* Left Side */}
         <div className="flex items-center gap-4 flex-1">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+            aria-label="Open navigation"
+          >
+            <Menu size={20} />
+          </button>
           <div className="lg:ml-64 flex items-center gap-4 flex-1">
             {/* Search Bar */}
             <div className="hidden md:flex items-center gap-2 bg-gray-100 dark:bg-dark-700 px-4 py-2 rounded-lg flex-1 max-w-md">
