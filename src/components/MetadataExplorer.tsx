@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { ChevronDown, ChevronRight, Columns, Database, Search, Table2 } from 'lucide-react'
+import AIQueryInput from './AIQueryInput'
 
 type ColumnItem = {
   name: string
@@ -74,6 +75,8 @@ const METADATA: SchemaItem[] = [
 
 const MetadataExplorer: React.FC = () => {
   const [query, setQuery] = useState('')
+  const [lastPrompt, setLastPrompt] = useState('')
+  const [generatedSql, setGeneratedSql] = useState('')
   const [expandedSchemas, setExpandedSchemas] = useState<Record<string, boolean>>({
     public: true,
     analytics: true,
@@ -131,6 +134,67 @@ const MetadataExplorer: React.FC = () => {
     (sum, schema) => sum + schema.tables.reduce((tableSum, table) => tableSum + table.columns.length, 0),
     0
   )
+
+  const aiSuggestions = useMemo(() => {
+    const tablePrompts = METADATA.flatMap((schema) =>
+      schema.tables.map((table) => `Summarize ${schema.name}.${table.name} and highlight anomalies`)
+    )
+
+    const columnPrompts = METADATA.flatMap((schema) =>
+      schema.tables.flatMap((table) =>
+        table.columns.slice(0, 2).map((column) => `Find trends in ${schema.name}.${table.name}.${column.name}`)
+      )
+    )
+
+    return [
+      'Show weekly active users for the last 12 weeks',
+      'Compare order status distribution month over month',
+      'List top users by total order amount',
+      'Detect unusual spikes in event_stream volume',
+      ...tablePrompts,
+      ...columnPrompts,
+    ]
+  }, [])
+
+  const generateSqlFromPrompt = (prompt: string) => {
+    const normalizedPrompt = prompt.toLowerCase()
+
+    if (normalizedPrompt.includes('order') && normalizedPrompt.includes('status')) {
+      return `SELECT status, COUNT(*) AS total_orders
+FROM public.orders
+GROUP BY status
+ORDER BY total_orders DESC;`
+    }
+
+    if (normalizedPrompt.includes('top') && normalizedPrompt.includes('user')) {
+      return `SELECT o.user_id, SUM(o.total_amount) AS total_spend
+FROM public.orders o
+GROUP BY o.user_id
+ORDER BY total_spend DESC
+LIMIT 10;`
+    }
+
+    if (normalizedPrompt.includes('event') || normalizedPrompt.includes('spike')) {
+      return `SELECT DATE_TRUNC('hour', occurred_at) AS hour_bucket,
+       COUNT(*) AS event_count
+FROM analytics.event_stream
+GROUP BY hour_bucket
+ORDER BY hour_bucket DESC
+LIMIT 48;`
+    }
+
+    return `SELECT u.created_at::date AS signup_date,
+       COUNT(*) AS new_users
+FROM public.users u
+GROUP BY signup_date
+ORDER BY signup_date DESC
+LIMIT 30;`
+  }
+
+  const handlePromptSubmit = (prompt: string) => {
+    setLastPrompt(prompt)
+    setGeneratedSql(generateSqlFromPrompt(prompt))
+  }
 
   const toggleSchema = (schemaName: string) => {
     setExpandedSchemas((prev) => ({
@@ -204,6 +268,19 @@ const MetadataExplorer: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <AIQueryInput suggestions={aiSuggestions} onSubmit={handlePromptSubmit} />
+
+      {generatedSql ? (
+        <div className="mb-5 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/70 dark:bg-blue-900/20 p-4">
+          <p className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300 mb-2">Latest AI Prompt</p>
+          <p className="text-sm text-gray-900 dark:text-gray-100 mb-3">{lastPrompt}</p>
+          <p className="text-xs uppercase tracking-wide text-gray-600 dark:text-gray-400 mb-2">Suggested SQL</p>
+          <pre className="text-xs sm:text-sm rounded-md border border-blue-100 dark:border-blue-900 bg-white dark:bg-dark-900 p-3 overflow-x-auto text-gray-800 dark:text-gray-100">
+            <code>{generatedSql}</code>
+          </pre>
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
         <div className="rounded-lg border border-gray-200 dark:border-dark-700 p-3 bg-gray-50 dark:bg-dark-700/50">
