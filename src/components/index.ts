@@ -8,11 +8,11 @@ export { default as SQLEditor } from './SQLEditor'
 export { default as SQLEditorDemo } from './SQLEditorDemo'
 
 // Utilities
-export { formatSQL, minifySQL, isValidSQL, getSQLStats } from '../utils/sqlFormatter'
+export { formatSQL, minifySQL, isValidSQL, getSQLStats, validateSQL } from '../utils/sqlFormatter'
 export { useSQLQuery, default as useSQLQueryHook } from '../utils/useSQLQuery'
 
 // Types
-export type { FormatterOptions } from '../utils/sqlFormatter'
+export type { FormatterOptions, SQLValidationResult, SQLValidationBadge, SQLValidationMessage } from '../utils/sqlFormatter'
 
 // Re-export for convenience
 export type SQLEditorProps = React.ComponentProps<typeof import('./SQLEditor').default>

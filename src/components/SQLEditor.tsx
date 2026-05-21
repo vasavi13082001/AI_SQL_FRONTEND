@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react'
-import { Copy, Check, Zap, Trash2, Eye, EyeOff, Download } from 'lucide-react'
-import { formatSQL, isValidSQL, getSQLStats, minifySQL } from '../utils/sqlFormatter'
+import { Copy, Check, Zap, Trash2, Eye, EyeOff, Download, AlertCircle, AlertTriangle, Lightbulb, ShieldCheck } from 'lucide-react'
+import { formatSQL, getSQLStats, minifySQL, validateSQL } from '../utils/sqlFormatter'
 import './SQLEditor.css'
 
 type ViewMode = 'editor' | 'preview' | 'split'
@@ -34,8 +34,8 @@ const SQLEditor: React.FC<SQLEditorProps> = ({
   // Get SQL stats
   const stats = useMemo(() => getSQLStats(query), [query])
 
-  // Check if query is valid
-  const isValid = useMemo(() => isValidSQL(query), [query])
+  // Build validation diagnostics for inline feedback
+  const validation = useMemo(() => validateSQL(query), [query])
 
   // Handle query change
   const handleQueryChange = useCallback(
@@ -140,20 +140,40 @@ const SQLEditor: React.FC<SQLEditorProps> = ({
     return highlighted
   }
 
+  const getBadgeClassName = (tone: 'neutral' | 'success' | 'warning' | 'error' | 'info') => {
+    switch (tone) {
+      case 'success':
+        return 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+      case 'warning':
+        return 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300'
+      case 'error':
+        return 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+      case 'info':
+        return 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+      default:
+        return 'bg-gray-100 dark:bg-dark-600 text-gray-700 dark:text-gray-300'
+    }
+  }
+
   return (
     <div className="sql-editor-container rounded-lg border border-gray-200 dark:border-dark-700 overflow-hidden bg-white dark:bg-dark-800 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between gap-2 border-b border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-700 p-3 flex-wrap">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">SQL Editor</h3>
-          {isValid && query.trim() && (
+          {validation.status === 'valid' && query.trim() && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
               Valid
             </span>
           )}
-          {query.trim() && !isValid && (
+          {validation.status === 'invalid' && query.trim() && (
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300">
               Invalid
+            </span>
+          )}
+          {validation.status === 'warning' && query.trim() && (
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300">
+              Needs Review
             </span>
           )}
         </div>
@@ -238,6 +258,87 @@ const SQLEditor: React.FC<SQLEditorProps> = ({
         )}
       </div>
 
+      {/* Inline Validation Panel */}
+      <div className="border-t border-gray-200 dark:border-dark-700 bg-white dark:bg-dark-800 p-3">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <ShieldCheck size={14} className="text-gray-500 dark:text-gray-400" />
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400">Validation</span>
+          {validation.badges.map((badge) => (
+            <span
+              key={badge.label}
+              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${getBadgeClassName(badge.tone)}`}
+            >
+              {badge.label}
+            </span>
+          ))}
+        </div>
+
+        {!query.trim() && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">Start typing SQL to see syntax checks, warnings, and optimization tips.</p>
+        )}
+
+        {!!query.trim() && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/40 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle size={14} className="text-red-600 dark:text-red-400" />
+                <h4 className="text-xs font-semibold text-red-700 dark:text-red-300">Syntax Errors</h4>
+              </div>
+              {validation.errors.length === 0 ? (
+                <p className="text-xs text-red-700/80 dark:text-red-300/80">No syntax errors detected.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {validation.errors.map((item) => (
+                    <li key={item.code} className="text-xs text-red-800 dark:text-red-200">
+                      <p className="font-medium">{item.message}</p>
+                      {item.detail && <p className="text-red-700/90 dark:text-red-300/90">{item.detail}</p>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/40 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={14} className="text-amber-600 dark:text-amber-400" />
+                <h4 className="text-xs font-semibold text-amber-700 dark:text-amber-300">Warnings</h4>
+              </div>
+              {validation.warnings.length === 0 ? (
+                <p className="text-xs text-amber-700/80 dark:text-amber-300/80">No warnings.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {validation.warnings.map((item) => (
+                    <li key={item.code} className="text-xs text-amber-800 dark:text-amber-200">
+                      <p className="font-medium">{item.message}</p>
+                      {item.detail && <p className="text-amber-700/90 dark:text-amber-300/90">{item.detail}</p>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/40 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb size={14} className="text-blue-600 dark:text-blue-400" />
+                <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-300">Optimization Tips</h4>
+              </div>
+              {validation.tips.length === 0 ? (
+                <p className="text-xs text-blue-700/80 dark:text-blue-300/80">No optimization tips right now.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {validation.tips.map((item) => (
+                    <li key={item.code} className="text-xs text-blue-800 dark:text-blue-200">
+                      <p className="font-medium">{item.message}</p>
+                      {item.detail && <p className="text-blue-700/90 dark:text-blue-300/90">{item.detail}</p>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Footer - Actions and Stats */}
       <div className="border-t border-gray-200 dark:border-dark-700 bg-gray-50 dark:bg-dark-700 p-3">
         {/* Stats */}
@@ -302,7 +403,7 @@ const SQLEditor: React.FC<SQLEditorProps> = ({
           {onQuerySubmit && (
             <button
               onClick={() => onQuerySubmit(formattedQuery || query)}
-              disabled={!isValid || !query.trim()}
+              disabled={validation.status === 'invalid' || !query.trim()}
               className="flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg transition-colors bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
               title="Execute query"
             >
