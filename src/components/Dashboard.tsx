@@ -1,6 +1,30 @@
 import React, { useState } from 'react'
 import { TrendingUp, Users, FileText, Activity } from 'lucide-react'
 import MetadataExplorer from './MetadataExplorer'
+import DataTable from './DataTable'
+
+type TransactionRow = {
+  transactionId: string
+  user: string
+  amount: number
+  status: 'Completed' | 'Pending' | 'Failed'
+  date: string
+}
+
+const transactions: TransactionRow[] = [
+  { transactionId: 'TXN00001', user: 'Ava Miller', amount: 349.45, status: 'Completed', date: '2026-05-01' },
+  { transactionId: 'TXN00002', user: 'Noah Davis', amount: 1299.99, status: 'Pending', date: '2026-05-02' },
+  { transactionId: 'TXN00003', user: 'Sophia Chen', amount: 74.0, status: 'Completed', date: '2026-05-03' },
+  { transactionId: 'TXN00004', user: 'Liam Patel', amount: 615.2, status: 'Failed', date: '2026-05-04' },
+  { transactionId: 'TXN00005', user: 'Mia Johnson', amount: 212.8, status: 'Completed', date: '2026-05-05' },
+  { transactionId: 'TXN00006', user: 'Ethan Wilson', amount: 980.01, status: 'Pending', date: '2026-05-06' },
+  { transactionId: 'TXN00007', user: 'Olivia Brown', amount: 156.73, status: 'Completed', date: '2026-05-07' },
+  { transactionId: 'TXN00008', user: 'Lucas Taylor', amount: 85.62, status: 'Completed', date: '2026-05-08' },
+  { transactionId: 'TXN00009', user: 'Emma Thomas', amount: 430.3, status: 'Failed', date: '2026-05-09' },
+  { transactionId: 'TXN00010', user: 'James Anderson', amount: 522.12, status: 'Completed', date: '2026-05-10' },
+  { transactionId: 'TXN00011', user: 'Isabella Moore', amount: 199.95, status: 'Pending', date: '2026-05-11' },
+  { transactionId: 'TXN00012', user: 'Benjamin Hall', amount: 749.5, status: 'Completed', date: '2026-05-12' },
+]
 
 const Dashboard: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month')
@@ -96,41 +120,40 @@ const Dashboard: React.FC = () => {
 
       {/* Table Section */}
       <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Recent Transactions</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="border-b border-gray-200 dark:border-dark-700">
-              <tr>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Transaction ID</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">User</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Amount</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-600 dark:text-gray-400">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[1, 2, 3, 4, 5].map((_, i) => (
-                <tr key={i} className="border-b border-gray-100 dark:border-dark-700 hover:bg-gray-50 dark:hover:bg-dark-700/50 transition-colors">
-                  <td className="py-3 px-4 text-gray-900 dark:text-gray-100">TXN{String(i + 1).padStart(5, '0')}</td>
-                  <td className="py-3 px-4 text-gray-900 dark:text-gray-100">User {i + 1}</td>
-                  <td className="py-3 px-4 text-gray-900 dark:text-gray-100 font-semibold">${(Math.random() * 1000).toFixed(2)}</td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        i % 2 === 0
-                          ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                          : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
-                      }`}
-                    >
-                      {i % 2 === 0 ? 'Completed' : 'Pending'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-600 dark:text-gray-400">2024-05-{String(i + 1).padStart(2, '0')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<TransactionRow>
+          title="Recent Transactions"
+          data={transactions}
+          defaultRowsPerPage={5}
+          exportFileName="recent-transactions.csv"
+          searchPlaceholder="Search transaction, user, status, date..."
+          columns={[
+            { key: 'transactionId', header: 'Transaction ID' },
+            { key: 'user', header: 'User' },
+            {
+              key: 'amount',
+              header: 'Amount',
+              className: 'font-semibold',
+              render: (value) => `$${Number(value).toFixed(2)}`,
+              csvValue: (value) => Number(value).toFixed(2),
+            },
+            {
+              key: 'status',
+              header: 'Status',
+              render: (value) => {
+                const status = String(value)
+                const badgeClass =
+                  status === 'Completed'
+                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+                    : status === 'Pending'
+                      ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
+                      : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+
+                return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${badgeClass}`}>{status}</span>
+              },
+            },
+            { key: 'date', header: 'Date' },
+          ]}
+        />
       </div>
     </div>
   )
