@@ -1,16 +1,17 @@
-import React, { useState } from 'react'
-import { Menu, X, LayoutDashboard, Settings, Users, FileText, BarChart3, LogOut } from 'lucide-react'
+import React from 'react'
+import { Menu, X, LayoutDashboard, Settings, Users, FileText, BarChart3, LogOut, Sparkles } from 'lucide-react'
 
 interface SidebarProps {
   isOpen: boolean
   setIsOpen: (open: boolean) => void
+  activePage: string
+  onNavigate: (page: string) => void
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
-  const [activeItem, setActiveItem] = useState('dashboard')
-
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activePage, onNavigate }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'optimization', label: 'Optimization Insights', icon: Sparkles },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'reports', label: 'Reports', icon: FileText },
@@ -52,13 +53,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           <ul className="space-y-2">
             {menuItems.map((item) => {
               const Icon = item.icon
-              const isActive = activeItem === item.id
+              const isActive = activePage === item.id
 
               return (
                 <li key={item.id}>
                   <button
                     onClick={() => {
-                      setActiveItem(item.id)
+                      onNavigate(item.id)
                       setIsOpen(false)
                     }}
                     className={`sidebar-link w-full text-left ${isActive ? 'active' : ''}`}

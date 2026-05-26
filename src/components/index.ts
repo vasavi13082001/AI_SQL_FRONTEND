@@ -34,3 +34,5 @@ export const SQL_EDITOR_VERSION = '1.0.0'
  * Demo:
  *   import { SQLEditorDemo } from './sql-editor'
  */
+
+export { default as OptimizationInsights } from './OptimizationInsights'
