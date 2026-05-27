@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import OptimizationInsights from './components/OptimizationInsights'
+import AnalyticsAssistant from './components/AnalyticsAssistant'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -23,8 +24,9 @@ function App() {
         {/* Main Content */}
         <main className="pt-16 lg:pl-64">
           {activePage === 'dashboard' && <Dashboard />}
+          {activePage === 'analytics' && <AnalyticsAssistant />}
           {activePage === 'optimization' && <OptimizationInsights />}
-          {!['dashboard', 'optimization'].includes(activePage) && (
+          {!['dashboard', 'analytics', 'optimization'].includes(activePage) && (
             <div className="p-8 text-gray-500 dark:text-gray-400">
               This section is under construction.
             </div>

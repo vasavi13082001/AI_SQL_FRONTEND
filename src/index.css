@@ -13,6 +13,17 @@
   }
 }
 
+@keyframes pulseCursor {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 @layer base {
   body {
     @apply bg-white dark:bg-dark-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
@@ -81,5 +92,65 @@
 
   .dark .modal-glass {
     background: linear-gradient(180deg, rgba(17, 24, 39, 0.96), rgba(17, 24, 39, 0.9));
+  }
+
+  .assistant-atmosphere {
+    background-image:
+      radial-gradient(circle at 8% 0%, rgba(6, 182, 212, 0.14), transparent 28%),
+      radial-gradient(circle at 92% 20%, rgba(16, 185, 129, 0.14), transparent 32%),
+      linear-gradient(180deg, rgba(241, 245, 249, 0.8), rgba(241, 245, 249, 0.2));
+  }
+
+  .dark .assistant-atmosphere {
+    background-image:
+      radial-gradient(circle at 8% 0%, rgba(34, 211, 238, 0.18), transparent 30%),
+      radial-gradient(circle at 92% 20%, rgba(16, 185, 129, 0.16), transparent 34%),
+      linear-gradient(180deg, rgba(2, 6, 23, 0.65), rgba(2, 6, 23, 0.25));
+  }
+
+  .assistant-shell {
+    @apply rounded-2xl border border-slate-200/90 dark:border-dark-700/90 bg-white/85 dark:bg-dark-800/85 backdrop-blur-sm shadow-sm;
+  }
+
+  .assistant-message-row {
+    @apply flex;
+    animation: riseIn 220ms ease-out both;
+  }
+
+  .assistant-avatar {
+    @apply h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0;
+  }
+
+  .assistant-avatar-bot {
+    @apply bg-cyan-100 text-cyan-700 dark:bg-cyan-900/50 dark:text-cyan-200;
+  }
+
+  .assistant-avatar-user {
+    @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200;
+  }
+
+  .assistant-bubble {
+    @apply rounded-2xl px-4 py-3 border;
+  }
+
+  .assistant-bubble-bot {
+    @apply border-slate-200 dark:border-dark-700 bg-slate-50/95 dark:bg-dark-900/60 text-slate-900 dark:text-slate-100;
+  }
+
+  .assistant-bubble-user {
+    @apply border-cyan-500/20 bg-cyan-600 text-white;
+  }
+
+  .assistant-preview-card {
+    @apply rounded-xl border border-slate-200 dark:border-dark-700 bg-white dark:bg-dark-800 p-3;
+  }
+
+  .assistant-sql-block {
+    @apply rounded-lg bg-slate-900 text-slate-100 p-3 text-xs leading-5 overflow-x-auto;
+  }
+
+  .assistant-cursor {
+    @apply inline-block w-2 h-4 ml-1 align-middle bg-cyan-500;
+    animation: pulseCursor 900ms steps(1, end) infinite;
   }
 }
