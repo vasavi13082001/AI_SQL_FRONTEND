@@ -1,38 +1,58 @@
-import { useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { DarkModeProvider } from './context/DarkModeContext'
-import Navbar from './components/Navbar'
-import Sidebar from './components/Sidebar'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import AppLayout from './components/AppLayout'
+import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './components/Dashboard'
 import OptimizationInsights from './components/OptimizationInsights'
 import AnalyticsAssistant from './components/AnalyticsAssistant'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import UnauthorizedPage from './pages/UnauthorizedPage'
+
+const PlaceholderPage = () => (
+  <div className="p-8 text-gray-500 dark:text-gray-400">This section is under construction.</div>
+)
+
+const RootRedirect = () => {
+  const { isAuthenticated } = useAuth()
+
+  return <Navigate to={isAuthenticated ? '/app/dashboard' : '/login'} replace />
+}
 
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [activePage, setActivePage] = useState('dashboard')
-
   return (
     <DarkModeProvider>
-      <div className="min-h-screen bg-gray-50 dark:bg-dark-900">
-        <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-        <Sidebar
-          isOpen={sidebarOpen}
-          setIsOpen={setSidebarOpen}
-          activePage={activePage}
-          onNavigate={setActivePage}
-        />
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<RootRedirect />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        {/* Main Content */}
-        <main className="pt-16 lg:pl-64">
-          {activePage === 'dashboard' && <Dashboard />}
-          {activePage === 'analytics' && <AnalyticsAssistant />}
-          {activePage === 'optimization' && <OptimizationInsights />}
-          {!['dashboard', 'analytics', 'optimization'].includes(activePage) && (
-            <div className="p-8 text-gray-500 dark:text-gray-400">
-              This section is under construction.
-            </div>
-          )}
-        </main>
-      </div>
+          <Route element={<ProtectedRoute />}>
+            <Route path="/app" element={<AppLayout />}>
+              <Route index element={<Navigate to="dashboard" replace />} />
+              <Route path="dashboard" element={<Dashboard />} />
+              <Route path="unauthorized" element={<UnauthorizedPage />} />
+
+              <Route element={<ProtectedRoute allowedRoles={['admin', 'analyst']} />}>
+                <Route path="analytics" element={<AnalyticsAssistant />} />
+                <Route path="optimization" element={<OptimizationInsights />} />
+                <Route path="reports" element={<PlaceholderPage />} />
+              </Route>
+
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="users" element={<PlaceholderPage />} />
+                <Route path="settings" element={<PlaceholderPage />} />
+              </Route>
+
+              <Route path="*" element={<PlaceholderPage />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<RootRedirect />} />
+        </Routes>
+      </AuthProvider>
     </DarkModeProvider>
   )
 }

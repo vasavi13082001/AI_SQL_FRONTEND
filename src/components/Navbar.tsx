@@ -1,12 +1,16 @@
 import React from 'react'
-import { Bell, Search, Moon, Sun, User, Menu } from 'lucide-react'
+import { Bell, Search, Moon, Sun, User, Menu, LogOut } from 'lucide-react'
 import { useDarkMode } from '../context/DarkModeContext'
+import type { UserRole } from '../types/auth'
 
 interface NavbarProps {
   onMenuClick: () => void
+  userName: string
+  userRole: UserRole
+  onLogout: () => void
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
+const Navbar: React.FC<NavbarProps> = ({ onMenuClick, userName, userRole, onLogout }) => {
   const { isDarkMode, toggleDarkMode } = useDarkMode()
 
   return (
@@ -56,7 +60,17 @@ const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">
               <User size={18} />
             </div>
-            <span className="hidden sm:inline text-sm font-medium">Admin</span>
+            <span className="hidden sm:inline text-sm font-medium">
+              {userName} ({userRole})
+            </span>
+          </button>
+
+          <button
+            onClick={onLogout}
+            className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-700 rounded-lg transition-colors"
+            title="Sign out"
+          >
+            <LogOut size={20} />
           </button>
         </div>
       </div>
