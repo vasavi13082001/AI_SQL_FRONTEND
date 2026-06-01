@@ -1,5 +1,5 @@
 import React from 'react'
-import { Menu, X, LayoutDashboard, Settings, Users, FileText, BarChart3, LogOut, Sparkles } from 'lucide-react'
+import { Menu, X, LayoutDashboard, Settings, Users, FileText, BarChart3, LogOut, Sparkles, Gauge } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types/auth'
@@ -43,6 +43,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activePage, onLogo
       icon: BarChart3,
       path: '/app/analytics',
       allowedRoles: ['admin', 'analyst'],
+    },
+    {
+      id: 'admin-analytics',
+      label: 'Admin Analytics',
+      icon: Gauge,
+      path: '/app/admin-analytics',
+      allowedRoles: ['admin'],
     },
     {
       id: 'users',
