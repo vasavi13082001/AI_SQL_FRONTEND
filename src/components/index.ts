@@ -7,9 +7,23 @@
 export { default as SQLEditor } from './SQLEditor'
 export { default as SQLEditorDemo } from './SQLEditorDemo'
 
+// Cache and Refresh Indicators
+export { default as CacheIndicator, CacheBadge, formatBytes } from './CacheIndicator'
+export type { CacheMetadata } from './CacheIndicator'
+
+export { default as LoadingSkeleton, SkeletonGrid, SkeletonLine, SkeletonParagraph } from './LoadingSkeleton'
+
+export { default as DashboardRefreshState, RefreshStatusBadge, RefreshTimeline } from './DashboardRefreshState'
+export type { RefreshState, RefreshTrigger, DashboardRefreshMetadata, RefreshTimelineItem } from './DashboardRefreshState'
+
 // Utilities
 export { formatSQL, minifySQL, isValidSQL, getSQLStats, validateSQL } from '../utils/sqlFormatter'
 export { useSQLQuery, default as useSQLQueryHook } from '../utils/useSQLQuery'
+export { useCache, useOptimizedCache } from '../utils/useCache'
+export type { CacheEntry, UseCacheOptions } from '../utils/useCache'
+
+export { useDashboardRefresh, useMultipleRefresh } from '../utils/useDashboardRefresh'
+export type { UseDashboardRefreshOptions, RefreshResult } from '../utils/useDashboardRefresh'
 
 // Types
 export type { FormatterOptions, SQLValidationResult, SQLValidationBadge, SQLValidationMessage } from '../utils/sqlFormatter'
@@ -25,14 +39,14 @@ export const SQL_EDITOR_VERSION = '1.0.0'
  * Basic component:
  *   import { SQLEditor } from './sql-editor'
  * 
- * With utilities:
- *   import { formatSQL, minifySQL, isValidSQL } from './sql-editor'
+ * Cache indicators:
+ *   import { CacheIndicator, useCache } from './cache'
  * 
- * With hook:
- *   import { useSQLQuery } from './sql-editor'
+ * Loading skeletons:
+ *   import { LoadingSkeleton, SkeletonGrid } from './loading'
  * 
- * Demo:
- *   import { SQLEditorDemo } from './sql-editor'
+ * Refresh states:
+ *   import { DashboardRefreshState, useDashboardRefresh } from './refresh'
  */
 
 export { default as OptimizationInsights } from './OptimizationInsights'
