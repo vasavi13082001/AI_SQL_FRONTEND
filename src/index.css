@@ -153,4 +153,69 @@
     @apply inline-block w-2 h-4 ml-1 align-middle bg-cyan-500;
     animation: pulseCursor 900ms steps(1, end) infinite;
   }
+
+  .ai-error-shell {
+    @apply mt-4 rounded-2xl border border-amber-200/80 dark:border-amber-500/30 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-900/20 dark:via-dark-900/90 dark:to-orange-950/30 p-4;
+  }
+
+  .ai-error-header {
+    @apply flex items-start gap-3;
+  }
+
+  .ai-error-icon-wrap {
+    @apply h-9 w-9 rounded-xl flex items-center justify-center bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-200 flex-shrink-0;
+  }
+
+  .ai-error-eyebrow {
+    @apply text-[11px] uppercase tracking-[0.2em] text-amber-700 dark:text-amber-300 font-semibold;
+  }
+
+  .ai-error-title {
+    @apply mt-1 text-base font-semibold text-slate-900 dark:text-slate-100;
+  }
+
+  .ai-error-summary {
+    @apply mt-1 text-sm text-slate-700 dark:text-slate-300;
+  }
+
+  .ai-error-meta {
+    @apply mt-3 flex flex-wrap gap-2;
+  }
+
+  .ai-error-badge {
+    @apply rounded-full border border-amber-300/70 dark:border-amber-400/40 bg-white/85 dark:bg-dark-800/85 px-2.5 py-1 text-[11px] font-medium text-amber-800 dark:text-amber-200;
+  }
+
+  .ai-error-grid {
+    @apply mt-4 grid grid-cols-1 xl:grid-cols-2 gap-3;
+  }
+
+  .ai-error-panel {
+    @apply rounded-xl border border-slate-200 dark:border-dark-700 bg-white/80 dark:bg-dark-800/80 p-3;
+  }
+
+  .ai-error-panel-title {
+    @apply mb-2 text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300 flex items-center gap-1.5;
+  }
+
+  .ai-error-chip {
+    @apply rounded-full border border-cyan-300/80 dark:border-cyan-500/40 bg-cyan-50 dark:bg-cyan-900/30 px-3 py-1 text-xs font-medium text-cyan-800 dark:text-cyan-100 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 transition-colors;
+  }
+
+  .ai-error-list {
+    @apply space-y-1.5 text-xs text-slate-700 dark:text-slate-300 leading-5;
+  }
+
+  .ai-error-list li {
+    @apply pl-4 relative;
+  }
+
+  .ai-error-list li::before {
+    content: '';
+    @apply absolute left-0 top-2 h-1.5 w-1.5 rounded-full bg-amber-500;
+  }
+
+  .ai-error-retry-btn {
+    @apply inline-flex items-center gap-2 rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-700 transition-colors;
+  }
 }

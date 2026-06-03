@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Bot, Copy, Loader2, Send, Sparkles, User2 } from 'lucide-react'
 import { formatSQL } from '../utils/sqlFormatter'
+import AIErrorState, { AIErrorDetails } from './AIErrorState'
 
 type SQLPreview = {
   id: string
@@ -16,6 +17,19 @@ type AssistantMessage = {
   renderedText: string
   isStreaming?: boolean
   previews?: SQLPreview[]
+  error?: AIErrorDetails
+}
+
+type AIErrorCode = AIErrorDetails['code']
+
+class AIServiceError extends Error {
+  code: AIErrorCode
+
+  constructor(code: AIErrorCode, message: string) {
+    super(message)
+    this.name = 'AIServiceError'
+    this.code = code
+  }
 }
 
 const starterPrompts = [
@@ -23,7 +37,154 @@ const starterPrompts = [
   'Find churn risk users with 30 days inactivity',
   'Show conversion funnel drop-off by step this week',
   'List top failing API endpoints in the last 24h',
+  'Simulate timeout error for retry demo',
 ]
+
+const detectPromptFailureMode = (prompt: string): AIErrorCode | null => {
+  const lowered = prompt.toLowerCase()
+
+  if (!lowered.includes('simulate') && !lowered.includes('demo error')) {
+    return null
+  }
+
+  if (lowered.includes('network')) {
+    return 'network'
+  }
+
+  if (lowered.includes('rate')) {
+    return 'rate_limit'
+  }
+
+  if (lowered.includes('permission') || lowered.includes('access')) {
+    return 'permission'
+  }
+
+  if (lowered.includes('schema') || lowered.includes('column')) {
+    return 'schema'
+  }
+
+  if (lowered.includes('timeout') || lowered.includes('slow')) {
+    return 'timeout'
+  }
+
+  return 'unknown'
+}
+
+const buildErrorDetails = (code: AIErrorCode, prompt: string): AIErrorDetails => {
+  const requestId = `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
+
+  const defaults = {
+    requestId,
+    sourcePrompt: prompt,
+    retryLabel: 'Retry request',
+  }
+
+  if (code === 'timeout') {
+    return {
+      ...defaults,
+      code,
+      title: 'The AI service timed out before finishing the query plan.',
+      summary: 'Your request is valid, but the response window closed while building SQL alternatives.',
+      suggestions: [
+        'Show revenue trend by month only for the last 90 days',
+        'List top 10 segments by conversion rate this week',
+      ],
+      troubleshooting: [
+        'Reduce scope first: shorter date ranges and fewer grouping columns usually return faster.',
+        'Run once with a single KPI, then ask follow-up prompts for segmentation.',
+        'If retries keep failing, check warehouse workload and API latency from ops dashboards.',
+      ],
+    }
+  }
+
+  if (code === 'network') {
+    return {
+      ...defaults,
+      code,
+      title: 'Connection lost while reaching the AI inference endpoint.',
+      summary: 'The request never fully reached the service due to an interrupted network path.',
+      suggestions: [
+        'Summarize yesterday signups and paid conversions',
+        'Compare weekly active users for mobile vs web',
+      ],
+      troubleshooting: [
+        'Verify VPN, proxy, or corporate gateway connectivity for outbound AI traffic.',
+        'Retry once from a stable connection before changing your prompt.',
+        'If available, switch to a backup API region and try again.',
+      ],
+    }
+  }
+
+  if (code === 'rate_limit') {
+    return {
+      ...defaults,
+      code,
+      title: 'Too many AI requests were sent in a short interval.',
+      summary: 'The provider throttled this request to protect service capacity.',
+      suggestions: [
+        'Create a single SQL for retention by cohort month',
+        'Find checkout drop-off between step 2 and step 3',
+      ],
+      troubleshooting: [
+        'Wait 15 to 30 seconds, then retry the same prompt.',
+        'Consolidate repeated exploratory prompts into one broader request.',
+        'Consider queueing or client-side debouncing if multiple users share this dashboard.',
+      ],
+    }
+  }
+
+  if (code === 'permission') {
+    return {
+      ...defaults,
+      code,
+      title: 'The assistant does not have permission for this data context.',
+      summary: 'Access controls blocked one or more datasets needed to compile the response.',
+      suggestions: [
+        'Query allowed datasets for weekly product usage summary',
+        'Generate SQL for public analytics schema only',
+      ],
+      troubleshooting: [
+        'Confirm role mappings and dataset grants for the current account.',
+        'Try a prompt that targets known shared schemas first.',
+        'Request temporary access elevation if this is a legitimate analysis task.',
+      ],
+    }
+  }
+
+  if (code === 'schema') {
+    return {
+      ...defaults,
+      code,
+      title: 'Schema validation failed while composing SQL.',
+      summary: 'The prompt references fields that do not match the currently known metadata.',
+      suggestions: [
+        'Use only columns from analytics.session_facts table',
+        'Show available event metrics with daily counts',
+      ],
+      troubleshooting: [
+        'Double-check table and column names against the metadata explorer.',
+        'Ask for a narrower query using one table before introducing joins.',
+        'Refresh schema cache if columns were recently added or renamed.',
+      ],
+    }
+  }
+
+  return {
+    ...defaults,
+    code: 'unknown',
+    title: 'An unexpected AI processing error occurred.',
+    summary: 'The assistant hit an internal issue while preparing SQL options.',
+    suggestions: [
+      'Generate a daily KPI trend for the last 14 days',
+      'Break down conversion rate by customer segment',
+    ],
+    troubleshooting: [
+      'Retry once to rule out transient service instability.',
+      'Simplify prompt wording and remove optional constraints.',
+      'Escalate with the Request ID if the same issue repeats.',
+    ],
+  }
+}
 
 const buildSQLPreviews = (prompt: string): SQLPreview[] => {
   const lowered = prompt.toLowerCase()
@@ -172,6 +333,7 @@ const buildAssistantNarrative = (prompt: string, previews: SQLPreview[]) => {
 const AnalyticsAssistant: React.FC = () => {
   const [input, setInput] = useState('')
   const [isThinking, setIsThinking] = useState(false)
+  const [retryPrompt, setRetryPrompt] = useState<string | null>(null)
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       id: 'intro-assistant',
@@ -184,10 +346,11 @@ const AnalyticsAssistant: React.FC = () => {
 
   const streamTimerRef = useRef<number | null>(null)
   const scrollAnchorRef = useRef<HTMLDivElement | null>(null)
+  const simulatedFailureAttemptsRef = useRef<Record<string, number>>({})
 
   const canSend = input.trim().length > 0 && !isThinking
 
-  const suggestionChips = useMemo(() => starterPrompts.slice(0, 4), [])
+  const suggestionChips = useMemo(() => starterPrompts, [])
 
   useEffect(() => {
     scrollAnchorRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -209,7 +372,7 @@ const AnalyticsAssistant: React.FC = () => {
     }
   }
 
-  const submitPrompt = (promptText: string) => {
+  const submitPrompt = async (promptText: string, options?: { isRetry?: boolean }) => {
     const prompt = promptText.trim()
     if (!prompt || isThinking) {
       return
@@ -220,6 +383,8 @@ const AnalyticsAssistant: React.FC = () => {
       streamTimerRef.current = null
     }
 
+    const shouldAppendUserMessage = !options?.isRetry
+
     const userMessage: AssistantMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -227,49 +392,83 @@ const AnalyticsAssistant: React.FC = () => {
       renderedText: prompt,
     }
 
-    const previews = buildSQLPreviews(prompt)
-    const assistantText = buildAssistantNarrative(prompt, previews)
-    const assistantId = `assistant-${Date.now()}-${Math.random().toString(16).slice(2)}`
-
-    const assistantMessage: AssistantMessage = {
-      id: assistantId,
-      role: 'assistant',
-      text: assistantText,
-      renderedText: '',
-      isStreaming: true,
-      previews,
-    }
-
     setIsThinking(true)
-    setInput('')
-    setMessages((previous) => [...previous, userMessage, assistantMessage])
 
-    let cursor = 0
-    streamTimerRef.current = window.setInterval(() => {
-      cursor += 3
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 220))
+
+      const simulatedErrorCode = detectPromptFailureMode(prompt)
+      const normalizedPromptKey = prompt.toLowerCase()
+      const previousFailureCount = simulatedFailureAttemptsRef.current[normalizedPromptKey] || 0
+
+      if (simulatedErrorCode && previousFailureCount < 1) {
+        simulatedFailureAttemptsRef.current[normalizedPromptKey] = previousFailureCount + 1
+        throw new AIServiceError(simulatedErrorCode, `Simulated ${simulatedErrorCode} failure`)
+      }
+
+      const previews = buildSQLPreviews(prompt)
+      const assistantText = buildAssistantNarrative(prompt, previews)
+      const assistantId = `assistant-${Date.now()}-${Math.random().toString(16).slice(2)}`
+
+      const assistantMessage: AssistantMessage = {
+        id: assistantId,
+        role: 'assistant',
+        text: assistantText,
+        renderedText: '',
+        isStreaming: true,
+        previews,
+      }
+
+      setInput('')
+      setRetryPrompt(null)
       setMessages((previous) =>
-        previous.map((message) => {
-          if (message.id !== assistantId) {
-            return message
-          }
-
-          const nextSlice = assistantText.slice(0, cursor)
-          const streamingComplete = nextSlice.length >= assistantText.length
-
-          return {
-            ...message,
-            renderedText: nextSlice,
-            isStreaming: !streamingComplete,
-          }
-        }),
+        shouldAppendUserMessage ? [...previous, userMessage, assistantMessage] : [...previous, assistantMessage],
       )
 
-      if (cursor >= assistantText.length && streamTimerRef.current) {
-        window.clearInterval(streamTimerRef.current)
-        streamTimerRef.current = null
-        setIsThinking(false)
+      let cursor = 0
+      streamTimerRef.current = window.setInterval(() => {
+        cursor += 3
+        setMessages((previous) =>
+          previous.map((message) => {
+            if (message.id !== assistantId) {
+              return message
+            }
+
+            const nextSlice = assistantText.slice(0, cursor)
+            const streamingComplete = nextSlice.length >= assistantText.length
+
+            return {
+              ...message,
+              renderedText: nextSlice,
+              isStreaming: !streamingComplete,
+            }
+          }),
+        )
+
+        if (cursor >= assistantText.length && streamTimerRef.current) {
+          window.clearInterval(streamTimerRef.current)
+          streamTimerRef.current = null
+          setIsThinking(false)
+        }
+      }, 24)
+    } catch (error) {
+      const code = error instanceof AIServiceError ? error.code : 'unknown'
+      const details = buildErrorDetails(code, prompt)
+
+      const errorMessage: AssistantMessage = {
+        id: `assistant-error-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        role: 'assistant',
+        text: details.summary,
+        renderedText: details.summary,
+        error: details,
       }
-    }, 24)
+
+      setRetryPrompt(prompt)
+      setMessages((previous) =>
+        shouldAppendUserMessage ? [...previous, userMessage, errorMessage] : [...previous, errorMessage],
+      )
+      setIsThinking(false)
+    }
   }
 
   return (
@@ -310,6 +509,19 @@ const AnalyticsAssistant: React.FC = () => {
                         {message.renderedText}
                         {message.isStreaming ? <span className="assistant-cursor" /> : null}
                       </p>
+
+                      {isAssistant && message.error ? (
+                        <AIErrorState
+                          error={message.error}
+                          onRetry={() => {
+                            void submitPrompt(message.error?.sourcePrompt || retryPrompt || input, { isRetry: true })
+                          }}
+                          onUseSuggestion={(suggestion) => {
+                            setInput(suggestion)
+                            void submitPrompt(suggestion)
+                          }}
+                        />
+                      ) : null}
 
                       {isAssistant && message.previews && message.previews.length > 0 ? (
                         <div className="mt-4 grid grid-cols-1 xl:grid-cols-2 gap-3">
@@ -385,7 +597,9 @@ const AnalyticsAssistant: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => submitPrompt(input)}
+                onClick={() => {
+                  void submitPrompt(input)
+                }}
                 disabled={!canSend}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-600 text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Send prompt"
