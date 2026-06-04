@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard'
 import OptimizationInsights from './components/OptimizationInsights'
 import AnalyticsAssistant from './components/AnalyticsAssistant'
 import AdminAnalyticsDashboard from './components/AdminAnalyticsDashboard'
+import AIErrorDemoPage from './components/AIErrorDemoPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import UnauthorizedPage from './pages/UnauthorizedPage'
@@ -46,6 +47,7 @@ function App() {
                 <Route path="admin-analytics" element={<AdminAnalyticsDashboard />} />
                 <Route path="users" element={<PlaceholderPage />} />
                 <Route path="settings" element={<PlaceholderPage />} />
+                <Route path="error-demo" element={<AIErrorDemoPage />} />
               </Route>
 
               <Route path="*" element={<PlaceholderPage />} />

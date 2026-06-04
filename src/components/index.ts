@@ -50,3 +50,8 @@ export const SQL_EDITOR_VERSION = '1.0.0'
  */
 
 export { default as OptimizationInsights } from './OptimizationInsights'
+
+// AI Error handling
+export { default as AIErrorState } from './AIErrorState'
+export type { AIErrorDetails, AIErrorCode, AIErrorSeverity } from './AIErrorState'
+export { default as AIErrorDemoPage } from './AIErrorDemoPage'

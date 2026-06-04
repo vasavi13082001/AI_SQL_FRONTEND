@@ -154,8 +154,16 @@
     animation: pulseCursor 900ms steps(1, end) infinite;
   }
 
+  /* Legacy single-variant shell — kept for backward compatibility */
   .ai-error-shell {
     @apply mt-4 rounded-2xl border border-amber-200/80 dark:border-amber-500/30 bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-amber-900/20 dark:via-dark-900/90 dark:to-orange-950/30 p-4;
+  }
+
+  /* New multi-variant base shell — applies entrance animation + backdrop */
+  .ai-error-shell-base {
+    animation: riseIn 280ms ease-out both;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
   }
 
   .ai-error-header {
