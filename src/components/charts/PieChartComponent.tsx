@@ -6,7 +6,6 @@ import {
   Legend,
   Tooltip,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts'
 
 interface PieChartData {
@@ -31,14 +30,26 @@ interface PieChartComponentProps {
   donut?: boolean
 }
 
-const CustomTooltip = ({ active, payload, formatTooltip }: TooltipProps<number, string> & { formatTooltip?: (value: number) => string }) => {
+type TooltipEntry = {
+  name?: string
+  value?: string | number
+  color?: string
+}
+
+type SimpleTooltipProps = {
+  active?: boolean
+  payload?: TooltipEntry[]
+  formatTooltip?: (value: number) => string
+}
+
+const CustomTooltip = ({ active, payload, formatTooltip }: SimpleTooltipProps) => {
   if (active && payload && payload.length) {
     const entry = payload[0]
     return (
       <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
         <p className="text-sm font-semibold text-gray-800">{entry.name}</p>
         <p style={{ color: entry.color }} className="text-sm font-medium">
-          {formatTooltip ? formatTooltip(entry.value as number) : entry.value}
+          {formatTooltip ? formatTooltip(Number(entry.value || 0)) : entry.value}
         </p>
       </div>
     )
@@ -75,9 +86,9 @@ export const PieChartComponent: React.FC<PieChartComponentProps> = ({
             innerRadius={donut ? innerRadius || 60 : 0}
             outerRadius={outerRadius}
             paddingAngle={2}
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
           >
-            {data.map((entry, index) => (
+            {data.map((_, index) => (
               <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
             ))}
           </Pie>

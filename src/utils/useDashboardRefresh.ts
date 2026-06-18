@@ -46,8 +46,8 @@ export function useDashboardRefresh(
   })
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(!!autoRefreshInterval)
   const abortControllerRef = useRef<AbortController | null>(null)
-  const autoRefreshIntervalRef = useRef<NodeJS.Timeout>()
-  const progressIntervalRef = useRef<NodeJS.Timeout>()
+  const autoRefreshIntervalRef = useRef<ReturnType<typeof setInterval>>()
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval>>()
   const refreshHistoryRef = useRef<RefreshResult[]>([])
   const performanceMetricsRef = useRef({
     totalRefreshes: 0,
@@ -279,8 +279,7 @@ export function useDashboardRefresh(
  * Manage refresh state for multiple dashboard sections
  */
 export function useMultipleRefresh(
-  sections: Record<string, () => Promise<RefreshResult>>,
-  options: UseDashboardRefreshOptions = {}
+  sections: Record<string, () => Promise<RefreshResult>>
 ) {
   const [sectionStates, setSectionStates] = useState<Record<string, DashboardRefreshMetadata>>(
     () =>

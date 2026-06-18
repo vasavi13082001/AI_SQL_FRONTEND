@@ -44,16 +44,6 @@ interface WarehouseAnalyticsDashboardProps {
   darkMode?: boolean
 }
 
-const formatBytes = (bytes: number) => {
-  if (bytes >= 1024 * 1024 * 1024) {
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`
-  }
-  if (bytes >= 1024 * 1024) {
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
-  }
-  return `${(bytes / 1024).toFixed(2)} KB`
-}
-
 const formatCurrency = (value: number) => {
   return `$${value.toFixed(2)}`
 }
@@ -77,9 +67,7 @@ export const WarehouseAnalyticsDashboard: React.FC<WarehouseAnalyticsDashboardPr
   const bgClass = darkMode ? 'bg-gray-900' : 'bg-gray-50'
   const textClass = darkMode ? 'text-gray-100' : 'text-gray-900'
 
-  const STORAGE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
   const COST_COLORS = ['#6366f1', '#8b5cf6', '#d946ef', '#ec4899']
-  const CLUSTER_COLORS = ['#06b6d4', '#14b8a6', '#84cc16', '#eab308']
 
   const tableMetricsChartData = useMemo(
     () =>

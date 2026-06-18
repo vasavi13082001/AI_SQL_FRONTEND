@@ -1,198 +1,216 @@
-# React TypeScript Dashboard
+# AI-Powered SQL Query Generator Frontend
 
-A modern, responsive dashboard layout built with React, TypeScript, and Tailwind CSS featuring a sidebar navigation, top navbar, and complete dark mode support.
-
-## Features
-
-✨ **Key Features:**
-- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile devices
-- **Dark Mode Support** - Toggle between light and dark themes with persistent storage
-- **Sidebar Navigation** - Collapsible sidebar with smooth animations
-- **Top Navbar** - Includes search bar, notifications, theme toggle, and user profile
-- **Dashboard Content** - Stats cards, charts placeholder, recent activity, and transactions table
-- **TypeScript** - Full type safety across the application
-- **Tailwind CSS** - Utility-first styling with custom dark mode colors
-- **Lucide React Icons** - Beautiful and consistent icon library
+Production-ready React + TypeScript frontend for AI-assisted SQL generation, validation, execution, analytics monitoring, and role-based access control.
 
 ## Tech Stack
 
-- **React 18** - UI library
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling framework
-- **Vite** - Build tool and dev server
-- **Lucide React** - Icon library
+- React 18 + TypeScript
+- Vite + Tailwind CSS
+- React Router v6
+- Axios (centralized API client + interceptors)
+- Recharts
+- react-window (virtualized result table)
+- react-hot-toast
 
-## Getting Started
+## Implemented Features
+
+### 1) API Integration
+
+- Centralized Axios client in src/api/client.ts
+- JWT request interceptor (Authorization header)
+- Global response error normalization in src/api/errors.ts
+- Unauthorized event handling for session logout
+- Reusable service modules:
+  - src/services/authService.ts
+  - src/services/sqlService.ts
+  - src/services/analyticsService.ts
+- TypeScript API contracts in src/types/api.ts
+- Reusable API hooks:
+  - src/hooks/useApiRequest.ts
+  - src/hooks/useDashboardData.ts
+  - src/hooks/useActivityMonitoring.ts
+  - src/hooks/usePolling.ts
+- Graceful mock fallback support using VITE_USE_MOCKS
+
+### 2) Activity Monitoring Dashboard
+
+- Route: /app/activity-monitor
+- API health status cards
+- SQL generation metrics chart
+- Failed prompt metrics pie chart
+- Query execution timeline
+- User activity tracking table
+- KPI summary cards
+- Auto refresh polling (15s)
+
+### 3) End-to-End AI SQL Flow
+
+- AI prompt to SQL generation in QueryWorkbench
+- Server-side SQL validation prior to execution
+- SQL execution with latency + request id output
+- Virtualized result rendering for large row sets
+- Toast notifications for success/warning/failure
+- Query history dashboard connected via API service
+
+### 4) Performance Optimizations
+
+- Route-level lazy loading with React.lazy + Suspense
+- Dynamic code splitting for large route components
+- Memoized reusable components (ApiStatusCards, QueryExecutionTimeline, VirtualizedTable)
+- Existing useMemo/useCallback patterns retained and extended
+- Virtualized table rendering via react-window
+- Skeleton loaders for async states
+
+### 5) UI/UX Improvements
+
+- Global ErrorBoundary for resilient UI recovery
+- Global toast provider
+- Responsive monitoring + workbench layouts
+- Improved loading and empty/error states
+- Accessibility labels for key interactions
+- Shared visual tokens in src/index.css
+
+### 6) Docker Deployment
+
+- Multi-stage Docker build in Dockerfile
+- Vite production build in builder stage
+- Nginx runtime stage
+- SPA route fallback via nginx.conf
+- Environment-driven API config with build args
+
+## Setup Instructions
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- npm or yarn
+- Node.js 18+
+- npm 9+
 
-### Installation
+### Install and Run
 
-1. **Install dependencies:**
+1. Install dependencies:
+
 ```bash
 npm install
 ```
 
-2. **Start the development server:**
+2. Configure environment:
+
+```bash
+cp .env.example .env
+```
+
+3. Start dev server:
+
 ```bash
 npm run dev
 ```
 
-The application will open automatically at `http://localhost:3000`
-
-### Build for Production
+4. Build production bundle:
 
 ```bash
 npm run build
 ```
 
-The optimized build will be in the `dist/` directory.
-
-### Preview Production Build
+5. Preview production build:
 
 ```bash
 npm run preview
 ```
 
-## Project Structure
+## Environment Variables
 
-```
-src/
-├── components/
-│   ├── Navbar.tsx       # Top navigation bar
-│   ├── Sidebar.tsx      # Side navigation panel
-│   └── Dashboard.tsx    # Main dashboard content
-├── context/
-│   └── DarkModeContext.tsx  # Dark mode state management
-├── App.tsx              # Main app component
-├── main.tsx             # React entry point
-└── index.css            # Global styles
+Use .env (see .env.example):
 
-Configuration Files:
-├── tailwind.config.js   # Tailwind CSS configuration
-├── postcss.config.js    # PostCSS configuration
-├── tsconfig.json        # TypeScript configuration
-├── vite.config.ts       # Vite configuration
-└── index.html           # HTML entry point
-```
+- VITE_API_BASE_URL: Backend API base URL
+- VITE_API_TIMEOUT_MS: Request timeout in milliseconds
+- VITE_USE_MOCKS: true/false fallback behavior when API is unavailable
 
-## Customization
+## Folder Structure
 
-### Dark Mode
+Key architecture paths:
 
-Dark mode is controlled by the `DarkModeContext`. It:
-- Automatically detects system preference on first visit
-- Saves user preference to localStorage
-- Applies the `dark` class to the root element for Tailwind's dark mode
+- src/api
+  - client.ts
+  - errors.ts
+  - mockData.ts
+  - utils.ts
+- src/services
+  - authService.ts
+  - sqlService.ts
+  - analyticsService.ts
+- src/hooks
+  - useApiRequest.ts
+  - useDashboardData.ts
+  - useActivityMonitoring.ts
+  - usePolling.ts
+- src/components
+  - Dashboard.tsx
+  - QueryWorkbench.tsx
+  - ActivityMonitoringDashboard.tsx
+  - VirtualizedTable.tsx
+  - ErrorBoundary.tsx
+  - ToastProvider.tsx
 
-### Colors
+## Authentication and Routing
 
-Customize colors in `tailwind.config.js`:
-```javascript
-theme: {
-  extend: {
-    colors: {
-      // Add custom colors here
-    }
-  }
-}
-```
+- Auth provider restores persisted JWT session from localStorage
+- Protected route enforcement by role (admin/analyst/viewer)
+- Unauthorized API responses trigger auth:unauthorized and logout
 
-### Sidebar Navigation
+## Deployment Guide (Docker)
 
-Edit the `menuItems` array in `src/components/Sidebar.tsx` to add or modify navigation links.
+Build image:
 
-### Responsive Breakpoints
-
-- Mobile: < 640px
-- Tablet: 640px - 1024px
-- Desktop: > 1024px (lg breakpoint)
-
-## Available Icons
-
-The project uses Lucide React for icons. Common icons used:
-- `LayoutDashboard` - Dashboard icon
-- `BarChart3` - Analytics icon
-- `Users` - Users icon
-- `FileText` - Reports icon
-- `Settings` - Settings icon
-- `LogOut` - Logout icon
-- `Bell` - Notifications icon
-- `Moon` / `Sun` - Theme toggle icons
-- `Search` - Search icon
-- `Menu` / `X` - Mobile menu icons
-
-Browse more at: https://lucide.dev/
-
-## Component API
-
-### Navbar
-
-```tsx
-<Navbar onMenuClick={() => setIsOpen(!isOpen)} />
+```bash
+docker build -t ai-sql-frontend .
 ```
 
-Displays top navigation with search, notifications, theme toggle, and user profile.
+Build with API overrides:
 
-### Sidebar
-
-```tsx
-<Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+```bash
+docker build -t ai-sql-frontend \
+  --build-arg VITE_API_BASE_URL=https://api.example.com \
+  --build-arg VITE_API_TIMEOUT_MS=20000 \
+  --build-arg VITE_USE_MOCKS=false \
+  .
 ```
 
-Displays navigation menu with collapsible mobile drawer.
+Run container:
 
-### Dark Mode Hook
-
-```tsx
-const { isDarkMode, toggleDarkMode } = useDarkMode()
+```bash
+docker run -p 8080:80 ai-sql-frontend
 ```
 
-Use this hook in any component to access dark mode state.
+Open: http://localhost:8080
 
-## Styling Classes
+## API Integration Guide
 
-### Component Classes (in index.css)
+The frontend expects these backend endpoints:
 
-- `.sidebar-link` - Sidebar navigation items
-- `.sidebar-link.active` - Active navigation state
-- `.card` - Reusable card component
-- `.btn` - Button base styles
-- `.btn-primary` - Primary button
-- `.btn-secondary` - Secondary button
+- POST /auth/login
+- POST /auth/register
+- GET /auth/me
+- POST /sql/generate
+- POST /sql/validate
+- POST /sql/execute
+- GET /analytics/dashboard
+- GET /analytics/query-history
+- GET /analytics/activity-monitor
 
-### Tailwind Dark Mode
+All authenticated endpoints should accept:
 
-All components use Tailwind's `dark:` prefix for dark mode styles:
-```tsx
-<div className="bg-white dark:bg-dark-900">
-```
+- Authorization: Bearer <jwt>
 
-## Performance Tips
+## Demo Workflow
 
-1. Use React.memo() for frequently rendered components
-2. Implement code splitting for large chart libraries
-3. Consider virtualizing long tables with react-window
-4. Optimize images and use lazy loading
+1. Sign in using any role from login page.
+2. Open Dashboard and use AI SQL Workbench.
+3. Enter prompt, generate SQL, execute query.
+4. Inspect virtualized result table and query metadata.
+5. Open Activity Monitor to observe API health and AI metrics.
+6. Verify role-based routes in sidebar.
 
-## Future Enhancements
+## Notes
 
-- [ ] Add chart library (Recharts, Chart.js)
-- [ ] Implement user authentication
-- [ ] Add API integration
-- [ ] Create reusable form components
-- [ ] Add unit and integration tests
-- [ ] Implement state management (Redux/Zustand)
-- [ ] Add notifications system
-- [ ] Create more dashboard pages
-
-## License
-
-This project is open source and available under the MIT License.
-
-## Contributing
-
-Feel free to fork this project and submit pull requests with improvements!
+- The UI stays functional with mock fallback when backend is unavailable (configurable).
+- For strict production behavior, set VITE_USE_MOCKS=false.

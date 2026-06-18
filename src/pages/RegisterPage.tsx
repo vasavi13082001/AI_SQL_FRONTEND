@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types/auth'
 
@@ -14,11 +15,22 @@ const RegisterPage = () => {
   const [email, setEmail] = useState('new.user@example.com')
   const [password, setPassword] = useState('demo-password')
   const [role, setRole] = useState<UserRole>('viewer')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    register(name, email, password, role)
-    navigate('/app/dashboard', { replace: true })
+
+    setIsSubmitting(true)
+
+    try {
+      await register(name, email, password, role)
+      toast.success('Account created successfully')
+      navigate('/app/dashboard', { replace: true })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Registration failed')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -76,8 +88,12 @@ const RegisterPage = () => {
             </select>
           </div>
 
-          <button type="submit" className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 font-medium">
-            Register
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 font-medium disabled:opacity-60"
+          >
+            {isSubmitting ? 'Registering...' : 'Register'}
           </button>
         </form>
 

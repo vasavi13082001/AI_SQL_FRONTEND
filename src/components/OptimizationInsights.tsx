@@ -243,13 +243,6 @@ function formatMs(ms: number) {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const SavingsBadge: React.FC<{ pct: number; label: string }> = ({ pct, label }) => (
-  <div className="flex flex-col items-center text-center">
-    <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">-{pct}%</span>
-    <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{label}</span>
-  </div>
-)
-
 const SparkBar: React.FC<{ value: number; max?: number; color?: string }> = ({
   value,
   max = 100,

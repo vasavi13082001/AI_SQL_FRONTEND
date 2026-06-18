@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand-primary: 8 145 178;
+  --brand-accent: 16 185 129;
+  --surface-soft: 241 245 249;
+}
+
 @keyframes riseIn {
   from {
     opacity: 0;
@@ -27,6 +33,10 @@
 @layer base {
   body {
     @apply bg-white dark:bg-dark-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
+  }
+
+  * {
+    @apply motion-reduce:transition-none;
   }
 }
 
@@ -225,5 +235,20 @@
 
   .ai-error-retry-btn {
     @apply inline-flex items-center gap-2 rounded-lg bg-amber-600 text-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-700 transition-colors;
+  }
+
+  .loading-shimmer {
+    background: linear-gradient(90deg, rgba(148, 163, 184, 0.08) 25%, rgba(148, 163, 184, 0.2) 50%, rgba(148, 163, 184, 0.08) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }

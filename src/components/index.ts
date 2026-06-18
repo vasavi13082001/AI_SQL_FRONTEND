@@ -1,3 +1,5 @@
+import type React from 'react'
+
 /**
  * SQL Editor Components and Utilities
  * Central export point for all SQL editor related modules
@@ -50,6 +52,13 @@ export const SQL_EDITOR_VERSION = '1.0.0'
  */
 
 export { default as OptimizationInsights } from './OptimizationInsights'
+export { default as QueryWorkbench } from './QueryWorkbench'
+export { default as VirtualizedTable } from './VirtualizedTable'
+export { default as ActivityMonitoringDashboard } from './ActivityMonitoringDashboard'
+export { default as ApiStatusCards } from './ApiStatusCards'
+export { default as QueryExecutionTimeline } from './QueryExecutionTimeline'
+export { default as ErrorBoundary } from './ErrorBoundary'
+export { default as ToastProvider } from './ToastProvider'
 
 // AI Error handling
 export { default as AIErrorState } from './AIErrorState'

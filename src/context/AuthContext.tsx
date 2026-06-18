@@ -1,16 +1,16 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import type { AuthUser, UserRole } from '../types/auth'
-import { createDemoJwt, isTokenExpired, userFromToken } from '../utils/jwt'
-
-const AUTH_STORAGE_KEY = 'auth_session'
+import { isTokenExpired, userFromToken } from '../utils/jwt'
+import { AUTH_STORAGE_KEY } from '../constants/auth'
+import { authService } from '../services/authService'
 
 interface AuthContextValue {
   token: string | null
   user: AuthUser | null
   isAuthenticated: boolean
-  login: (email: string, password: string, role: UserRole) => void
-  register: (name: string, email: string, password: string, role: UserRole) => void
+  login: (email: string, password: string, role: UserRole) => Promise<void>
+  register: (name: string, email: string, password: string, role: UserRole) => Promise<void>
   logout: () => void
   hasRole: (roles: UserRole[]) => boolean
 }
@@ -40,44 +40,57 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [token, setToken] = useState<string | null>(initialSession.token)
   const [user, setUser] = useState<AuthUser | null>(initialSession.user)
 
-  const startSession = (name: string, email: string, role: UserRole) => {
-    const nextToken = createDemoJwt({ name, email, role })
-    const nextUser = userFromToken(nextToken)
-
-    if (!nextUser) {
-      throw new Error('Unable to start authenticated session.')
-    }
-
+  const startSession = useCallback((nextToken: string, nextUser: AuthUser) => {
     localStorage.setItem(AUTH_STORAGE_KEY, nextToken)
     setToken(nextToken)
     setUser(nextUser)
-  }
+  }, [])
 
-  const login = (email: string, _password: string, role: UserRole) => {
-    const normalizedEmail = email.trim().toLowerCase()
-    const fallbackName = normalizedEmail.split('@')[0] || 'user'
-    const displayName = fallbackName.charAt(0).toUpperCase() + fallbackName.slice(1)
+  const login = useCallback(async (email: string, password: string, role: UserRole) => {
+    const response = await authService.login({
+      email: email.trim().toLowerCase(),
+      password,
+      role,
+    })
 
-    startSession(displayName, normalizedEmail, role)
-  }
+    startSession(response.token, response.user)
+  }, [startSession])
 
-  const register = (name: string, email: string, _password: string, role: UserRole) => {
-    startSession(name.trim(), email.trim().toLowerCase(), role)
-  }
+  const register = useCallback(async (name: string, email: string, password: string, role: UserRole) => {
+    const response = await authService.register({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password,
+      role,
+    })
 
-  const logout = () => {
+    startSession(response.token, response.user)
+  }, [startSession])
+
+  const logout = useCallback(() => {
     localStorage.removeItem(AUTH_STORAGE_KEY)
     setToken(null)
     setUser(null)
-  }
+  }, [])
 
-  const hasRole = (roles: UserRole[]) => {
+  const hasRole = useCallback((roles: UserRole[]) => {
     if (!user) {
       return false
     }
 
     return roles.includes(user.role)
-  }
+  }, [user])
+
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout()
+    }
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized)
+    }
+  }, [logout])
 
   const value = useMemo(
     () => ({
@@ -89,7 +102,7 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       logout,
       hasRole,
     }),
-    [token, user],
+    [token, user, login, register, logout, hasRole],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

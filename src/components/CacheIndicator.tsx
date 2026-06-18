@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import { Database, Zap, AlertCircle, Clock } from 'lucide-react'
-import { useDarkMode } from '../context/DarkModeContext'
 
 export interface CacheMetadata {
   isCached: boolean
@@ -42,8 +41,6 @@ export const CacheIndicator: React.FC<CacheIndicatorProps> = ({
   compact = false,
   className = '',
 }) => {
-  const { isDarkMode } = useDarkMode()
-
   const cacheInfo = useMemo(() => {
     if (!metadata.isCached) {
       return {

@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import {
   RefreshCw,
   TrendingUp,
-  Users,
   Database,
   Zap,
-  AlertCircle,
 } from 'lucide-react'
 import { useDarkMode } from '../context/DarkModeContext'
 
@@ -13,10 +11,8 @@ import {
   CacheIndicator,
   CacheBadge,
   LoadingSkeleton,
-  DashboardRefreshState,
   RefreshStatusBadge,
   RefreshTimeline,
-  useDashboardRefresh,
   useCache,
   useMultipleRefresh,
 } from './index'
@@ -28,8 +24,6 @@ import type { CacheMetadata, RefreshResult, RefreshTimelineItem } from './index'
  */
 export const IntegratedDashboardExample: React.FC = () => {
   const { isDarkMode } = useDarkMode()
-  const [analyticsData, setAnalyticsData] = useState<any>(null)
-  const [metricsData, setMetricsData] = useState<any>(null)
 
   // Simulate API calls
   const fetchAnalytics = async (): Promise<RefreshResult> => {

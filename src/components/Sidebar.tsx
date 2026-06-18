@@ -1,5 +1,5 @@
 import React from 'react'
-import { Menu, X, LayoutDashboard, Settings, Users, FileText, BarChart3, LogOut, Sparkles, Gauge } from 'lucide-react'
+import { Menu, X, LayoutDashboard, Settings, Users, FileText, BarChart3, LogOut, Sparkles, Gauge, Activity } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types/auth'
@@ -14,7 +14,7 @@ interface SidebarProps {
 interface MenuItem {
   id: string
   label: string
-  icon: React.ComponentType<{ size?: number }>
+  icon: React.ComponentType<{ size?: number | string }>
   path: string
   allowedRoles: UserRole[]
 }
@@ -42,6 +42,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, activePage, onLogo
       label: 'AI Assistant',
       icon: BarChart3,
       path: '/app/analytics',
+      allowedRoles: ['admin', 'analyst'],
+    },
+    {
+      id: 'activity-monitor',
+      label: 'Activity Monitor',
+      icon: Activity,
+      path: '/app/activity-monitor',
       allowedRoles: ['admin', 'analyst'],
     },
     {

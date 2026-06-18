@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
 import type { UserRole } from '../types/auth'
 
@@ -14,13 +15,24 @@ const LoginPage = () => {
   const [email, setEmail] = useState('admin@example.com')
   const [password, setPassword] = useState('demo-password')
   const [role, setRole] = useState<UserRole>('admin')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const fromPath = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    login(email, password, role)
-    navigate(fromPath || '/app/dashboard', { replace: true })
+
+    setIsSubmitting(true)
+
+    try {
+      await login(email, password, role)
+      toast.success('Signed in successfully')
+      navigate(fromPath || '/app/dashboard', { replace: true })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to sign in')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -67,8 +79,12 @@ const LoginPage = () => {
             </select>
           </div>
 
-          <button type="submit" className="w-full rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 font-medium">
-            Sign In
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 font-medium disabled:opacity-60"
+          >
+            {isSubmitting ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 

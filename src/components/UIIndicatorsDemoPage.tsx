@@ -7,11 +7,9 @@ import {
   LoadingSkeleton,
   DashboardRefreshState,
   useDashboardRefresh,
-  useCache,
 } from './index'
 import type {
   CacheMetadata,
-  DashboardRefreshMetadata,
   RefreshResult,
 } from './index'
 
@@ -60,12 +58,6 @@ export const UIIndicatorsDemoPage: React.FC = () => {
       autoRefreshInterval: 10000,
       enableOptimization: true,
     })
-
-  // Cache hook
-  const cacheHook = useCache({
-    ttl: 5 * 60 * 1000,
-    storageKey: 'demo-cache',
-  })
 
   const cacheMetadataExample: CacheMetadata = useMemo(
     () => ({

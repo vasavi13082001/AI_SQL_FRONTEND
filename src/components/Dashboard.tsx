@@ -1,105 +1,10 @@
 import React, { useMemo, useState } from 'react'
-import {
-  BarChart3,
-  CheckCircle2,
-  Clock3,
-  Database,
-  Eye,
-  Search,
-  Timer,
-  X,
-  XCircle,
-} from 'lucide-react'
-
-type QueryStatus = 'Success' | 'Failed' | 'Running'
-
-type QueryHistoryRecord = {
-  id: string
-  title: string
-  sql: string
-  executedAt: string
-  database: string
-  status: QueryStatus
-  durationMs: number
-  rowsReturned: number
-  scannedMb: number
-  costCredits: number
-}
-
-const queryHistory: QueryHistoryRecord[] = [
-  {
-    id: 'qh-001',
-    title: 'Weekly active users trend',
-    sql: `SELECT DATE_TRUNC('week', occurred_at) AS week_start,\n       COUNT(DISTINCT user_id) AS active_users\nFROM analytics.event_stream\nWHERE occurred_at >= NOW() - INTERVAL '12 weeks'\nGROUP BY week_start\nORDER BY week_start;`,
-    executedAt: '2026-05-25T09:42:00Z',
-    database: 'analytics',
-    status: 'Success',
-    durationMs: 382,
-    rowsReturned: 12,
-    scannedMb: 18.4,
-    costCredits: 0.38,
-  },
-  {
-    id: 'qh-002',
-    title: 'Failed orders in last 24h',
-    sql: `SELECT id, user_id, total_amount, status, placed_at\nFROM public.orders\nWHERE status = 'failed'\n  AND placed_at >= NOW() - INTERVAL '1 day'\nORDER BY placed_at DESC;`,
-    executedAt: '2026-05-25T08:19:00Z',
-    database: 'public',
-    status: 'Success',
-    durationMs: 245,
-    rowsReturned: 57,
-    scannedMb: 5.7,
-    costCredits: 0.19,
-  },
-  {
-    id: 'qh-003',
-    title: 'Top spenders this quarter',
-    sql: `SELECT user_id, SUM(total_amount) AS total_spend\nFROM public.orders\nWHERE placed_at >= DATE_TRUNC('quarter', NOW())\nGROUP BY user_id\nORDER BY total_spend DESC\nLIMIT 20;`,
-    executedAt: '2026-05-25T07:04:00Z',
-    database: 'public',
-    status: 'Success',
-    durationMs: 512,
-    rowsReturned: 20,
-    scannedMb: 42.1,
-    costCredits: 0.66,
-  },
-  {
-    id: 'qh-004',
-    title: 'Session rollups refresh check',
-    sql: `SELECT started_at::date AS day,\n       AVG(duration_seconds) AS avg_duration_sec,\n       COUNT(*) AS sessions\nFROM analytics.session_rollups\nGROUP BY day\nORDER BY day DESC\nLIMIT 30;`,
-    executedAt: '2026-05-25T06:10:00Z',
-    database: 'analytics',
-    status: 'Running',
-    durationMs: 1890,
-    rowsReturned: 0,
-    scannedMb: 74.3,
-    costCredits: 1.02,
-  },
-  {
-    id: 'qh-005',
-    title: 'Orders with null totals audit',
-    sql: `SELECT id, user_id, total_amount, status\nFROM public.orders\nWHERE total_amount IS NULL\nORDER BY placed_at DESC\nLIMIT 200;`,
-    executedAt: '2026-05-24T21:27:00Z',
-    database: 'public',
-    status: 'Failed',
-    durationMs: 147,
-    rowsReturned: 0,
-    scannedMb: 8.2,
-    costCredits: 0.11,
-  },
-  {
-    id: 'qh-006',
-    title: 'Event volume anomaly scan',
-    sql: `SELECT DATE_TRUNC('hour', occurred_at) AS hour_bucket,\n       COUNT(*) AS events\nFROM analytics.event_stream\nWHERE occurred_at >= NOW() - INTERVAL '72 hours'\nGROUP BY hour_bucket\nHAVING COUNT(*) > 25000\nORDER BY hour_bucket DESC;`,
-    executedAt: '2026-05-24T17:33:00Z',
-    database: 'analytics',
-    status: 'Success',
-    durationMs: 780,
-    rowsReturned: 4,
-    scannedMb: 110.6,
-    costCredits: 1.48,
-  },
-]
+import { BarChart3, CheckCircle2, Clock3, Database, Eye, Search, Timer, X, XCircle } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { useDashboardData } from '../hooks/useDashboardData'
+import type { QueryHistoryRecord, QueryStatus } from '../types/api'
+import LoadingSkeleton from './LoadingSkeleton'
+import QueryWorkbench from './QueryWorkbench'
 
 const statusBadge: Record<QueryStatus, string> = {
   Success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
@@ -136,11 +41,14 @@ const Dashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All' | QueryStatus>('All')
   const [selectedQuery, setSelectedQuery] = useState<QueryHistoryRecord | null>(null)
+  const { data, isLoading, error, refresh } = useDashboardData(false)
+
+  const history = useMemo(() => data?.history ?? [], [data])
 
   const filteredHistory = useMemo(() => {
     const normalized = searchTerm.trim().toLowerCase()
 
-    return queryHistory.filter((item) => {
+    return history.filter((item) => {
       const matchesSearch =
         !normalized ||
         item.title.toLowerCase().includes(normalized) ||
@@ -151,21 +59,53 @@ const Dashboard: React.FC = () => {
 
       return matchesSearch && matchesStatus
     })
-  }, [searchTerm, statusFilter])
+  }, [history, searchTerm, statusFilter])
 
   const metrics = useMemo(() => {
     const total = filteredHistory.length
     const successful = filteredHistory.filter((item) => item.status === 'Success').length
     const successRate = total === 0 ? 0 : Math.round((successful / total) * 100)
-    const avgDuration =
-      total === 0 ? 0 : Math.round(filteredHistory.reduce((sum, item) => sum + item.durationMs, 0) / total)
+    const avgDuration = total === 0 ? 0 : Math.round(filteredHistory.reduce((sum, item) => sum + item.durationMs, 0) / total)
     const totalRows = filteredHistory.reduce((sum, item) => sum + item.rowsReturned, 0)
 
     return { total, successRate, avgDuration, totalRows }
   }, [filteredHistory])
 
+  if (isLoading && !data) {
+    return (
+      <div className="dashboard-atmosphere p-4 lg:p-8 min-h-[calc(100vh-4rem)]">
+        <LoadingSkeleton type="card" count={2} />
+        <LoadingSkeleton type="table" count={5} className="mt-6" />
+      </div>
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="dashboard-atmosphere p-4 lg:p-8 min-h-[calc(100vh-4rem)]">
+        <div className="card text-rose-600 dark:text-rose-300">
+          <p className="font-semibold">Failed to load dashboard data</p>
+          <p className="text-sm mt-1">{error || 'Unexpected error loading analytics data.'}</p>
+          <button
+            type="button"
+            onClick={() => {
+              void refresh().catch(() => {
+                toast.error('Unable to reload dashboard data')
+              })
+            }}
+            className="btn btn-primary text-sm mt-4"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="dashboard-atmosphere p-4 lg:p-8 min-h-[calc(100vh-4rem)]">
+      <QueryWorkbench />
+
       <div className="mb-8">
         <h1 className="text-3xl lg:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">
           Query History
@@ -223,7 +163,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto">
-            <Filter className="text-gray-500 dark:text-gray-400 flex-shrink-0" size={16} />
+            <Filter className="text-gray-500 dark:text-gray-400 flex-shrink-0" width={16} height={16} />
             {(['All', 'Success', 'Failed', 'Running'] as const).map((status) => (
               <button
                 key={status}
@@ -243,11 +183,7 @@ const Dashboard: React.FC = () => {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
         {filteredHistory.map((item, index) => (
-          <article
-            key={item.id}
-            className="history-card"
-            style={{ animationDelay: `${index * 80}ms` }}
-          >
+          <article key={item.id} className="history-card" style={{ animationDelay: `${index * 80}ms` }}>
             <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h2>
@@ -337,21 +273,6 @@ const Dashboard: React.FC = () => {
 
             <div className="rounded-lg bg-gray-900 text-gray-100 p-4 overflow-auto max-h-[50vh]">
               <pre className="font-mono text-sm leading-6 whitespace-pre-wrap break-all">{selectedQuery.sql}</pre>
-            </div>
-
-            <div className="mt-5 flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-300">
-              <p>
-                <span className="text-gray-500 dark:text-gray-400">Duration:</span> {selectedQuery.durationMs}ms
-              </p>
-              <p>
-                <span className="text-gray-500 dark:text-gray-400">Rows:</span> {formatCompactNumber(selectedQuery.rowsReturned)}
-              </p>
-              <p>
-                <span className="text-gray-500 dark:text-gray-400">Scanned:</span> {selectedQuery.scannedMb.toFixed(1)} MB
-              </p>
-              <p>
-                <span className="text-gray-500 dark:text-gray-400">Credits:</span> {selectedQuery.costCredits.toFixed(2)}
-              </p>
             </div>
           </div>
         </div>

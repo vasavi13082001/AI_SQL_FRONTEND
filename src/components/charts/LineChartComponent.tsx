@@ -8,7 +8,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  TooltipProps,
 } from 'recharts'
 
 interface LineChartData {
@@ -33,14 +32,27 @@ interface LineChartComponentProps {
   className?: string
 }
 
-const CustomTooltip = ({ active, payload, label, formatTooltip }: TooltipProps<number, string> & { formatTooltip?: (value: number) => string }) => {
+type TooltipEntry = {
+  name?: string
+  value?: string | number
+  color?: string
+}
+
+type SimpleTooltipProps = {
+  active?: boolean
+  payload?: TooltipEntry[]
+  label?: string | number
+  formatTooltip?: (value: number) => string
+}
+
+const CustomTooltip = ({ active, payload, label, formatTooltip }: SimpleTooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white p-3 border border-gray-200 rounded shadow-lg">
         <p className="text-sm font-semibold text-gray-800 mb-2">{label}</p>
-        {payload.map((entry, index) => (
+        {payload.map((entry: TooltipEntry, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
-            {entry.name}: {formatTooltip ? formatTooltip(entry.value as number) : entry.value}
+            {entry.name}: {formatTooltip ? formatTooltip(Number(entry.value || 0)) : entry.value}
           </p>
         ))}
       </div>

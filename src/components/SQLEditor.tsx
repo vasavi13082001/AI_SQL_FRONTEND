@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useCallback, useMemo, useEffect } from 'react'
 import { Copy, Check, Zap, Trash2, Eye, EyeOff, Download, AlertCircle, AlertTriangle, Lightbulb, ShieldCheck } from 'lucide-react'
 import { formatSQL, getSQLStats, minifySQL, validateSQL } from '../utils/sqlFormatter'
 import './SQLEditor.css'
@@ -21,6 +21,10 @@ const SQLEditor: React.FC<SQLEditorProps> = ({
   height = '400px',
 }) => {
   const [query, setQuery] = useState(initialQuery)
+    useEffect(() => {
+      setQuery(initialQuery)
+    }, [initialQuery])
+
   const [copiedToClipboard, setCopiedToClipboard] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [autoFormat, setAutoFormat] = useState(true)

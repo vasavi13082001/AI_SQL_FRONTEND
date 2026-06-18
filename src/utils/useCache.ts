@@ -32,8 +32,7 @@ export interface UseCacheOptions {
  * })
  */
 export function useCache<T = unknown>(options: UseCacheOptions = {}) {
-  const { ttl = 5 * 60 * 1000, storageKey = 'app-cache', enableRemoteSync = false } =
-    options
+  const { ttl = 5 * 60 * 1000, storageKey = 'app-cache' } = options
 
   const [data, setData] = useState<T | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -241,7 +240,6 @@ export function useOptimizedCache<T = unknown>(
   const [optimizationLevel, setOptimizationLevel] = useState<'low' | 'medium' | 'high'>(
     'medium'
   )
-  const fetchTimeoutRef = useRef<NodeJS.Timeout>()
   const requestCountRef = useRef(0)
 
   const fetch = useCallback(
@@ -298,9 +296,7 @@ export function useOptimizedCache<T = unknown>(
   // Auto-fetch on mount
   useEffect(() => {
     fetch()
-    return () => {
-      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current)
-    }
+    return () => undefined
   }, [fetch])
 
   return {

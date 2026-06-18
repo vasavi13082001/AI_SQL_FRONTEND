@@ -55,7 +55,7 @@ type AIErrorStateProps = {
 // ─── Variant config ────────────────────────────────────────────────────────────
 
 type ErrorVariant = {
-  Icon: React.ComponentType<{ size?: number }>
+  Icon: React.ComponentType<{ size?: number | string }>
   eyebrow: string
   iconClass: string
   shellGradient: string

@@ -584,7 +584,7 @@ const AdminAnalyticsDashboard: React.FC = () => {
                 innerRadius={65}
                 outerRadius={100}
                 paddingAngle={3}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                 labelLine={{ stroke: '#9ca3af', strokeWidth: 1 }}
               >
                 {queryTypeDistribution.map((entry, index) => (
